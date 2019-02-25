@@ -11,7 +11,7 @@ import (
 
 func main() {
 	if len(os.Args) < 2 {
-		log.Fatal("twerkov <init | crawl | generate>")
+		log.Fatal("twerkov <init | cache | generate>")
 	}
 
 	config := twerkov.Config{}
@@ -46,6 +46,6 @@ func main() {
 		app.GenerateTweet()
 
 	default:
-		log.Fatal("twerkov <init | crawl | generate>")
+		log.Fatal("twerkov <init | cache | generate>")
 	}
 }
