@@ -11,7 +11,7 @@ import (
 
 func main() {
 	if len(os.Args) < 2 {
-		log.Fatal("twerkov <crawl | generate>")
+		log.Fatal("twerkov <init | crawl | generate>")
 	}
 
 	config := twerkov.Config{}
@@ -32,17 +32,20 @@ func main() {
 	defer app.Database.Handle.Close()
 
 	switch os.Args[1] {
-	case "crawl":
+	case "init":
+		app.InitializeDatabase()
+
+	case "cache":
 		if len(os.Args) < 3 {
-			log.Fatal("twerkov crawl <username>")
+			log.Fatal("twerkov cache <Twitter username>")
 		}
 
-		app.CrawlUserTweets(os.Args[2])
+		app.CacheUserTweets(os.Args[2])
 
 	case "generate":
 		app.GenerateTweet()
 
 	default:
-		log.Fatal("twerkov <crawl | generate>")
+		log.Fatal("twerkov <init | crawl | generate>")
 	}
 }

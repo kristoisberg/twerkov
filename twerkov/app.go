@@ -36,8 +36,30 @@ func (app *App) Init(config Config) (err error) {
 	return
 }
 
-// CrawlUserTweets crawls the latest tweets by the user with the specified username
-func (app *App) CrawlUserTweets(username string) {
+// InitializeDatabase creates the database structure needed for the application to function
+func (app *App) InitializeDatabase() {
+	stmt, err := app.Database.Handle.Query(`CREATE TABLE tweets (
+		id BIGINT(20) UNSIGNED NOT NULL,
+		user_id BIGINT(20) UNSIGNED NOT NULL,
+		text TEXT NOT NULL,
+		PRIMARY KEY (id)
+	)
+	COLLATE='utf8mb4_general_ci'
+	ENGINE=InnoDB
+	;
+	`)
+
+	if err != nil {
+		log.Fatal(err.Error())
+	}
+
+	defer stmt.Close()
+
+	log.Println("Database structure successfully created!")
+}
+
+// CacheUserTweets caches the latest tweets by the user with the specified username
+func (app *App) CacheUserTweets(username string) {
 	users, err := app.API.GetUsersLookup(username, nil)
 
 	if err != nil {
@@ -124,5 +146,9 @@ func (app *App) GenerateTweet() {
 		tokens = append(tokens, next)
 	}
 
-	app.API.PostTweet(strings.Join(tokens[1:len(tokens)-1], " "), url.Values{})
+	tweet := strings.Join(tokens[1:len(tokens)-1], " ")
+
+	app.API.PostTweet(tweet, url.Values{})
+
+	log.Println("New tweet: ", tweet)
 }
