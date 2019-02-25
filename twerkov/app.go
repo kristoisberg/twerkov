@@ -43,11 +43,7 @@ func (app *App) InitializeDatabase() {
 		user_id BIGINT(20) UNSIGNED NOT NULL,
 		text TEXT NOT NULL,
 		PRIMARY KEY (id)
-	)
-	COLLATE='utf8mb4_general_ci'
-	ENGINE=InnoDB
-	;
-	`)
+	)`)
 
 	if err != nil {
 		log.Fatal(err.Error())
