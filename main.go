@@ -33,14 +33,26 @@ func main() {
 
 	switch os.Args[1] {
 	case "init":
-		app.InitializeDatabase()
+		err := app.InitializeDatabase()
+
+		if err != nil {
+			log.Fatal(err.Error())
+		}
+
+		log.Println("Database structure successfully created!")
 
 	case "cache":
 		if len(os.Args) < 3 {
 			log.Fatal("twerkov cache <Twitter username>")
 		}
 
-		app.CacheUserTweets(os.Args[2])
+		count, err := app.CacheUserTweets(os.Args[2])
+
+		if err != nil {
+			log.Fatal(err.Error())
+		}
+
+		log.Println("Successfully cached", count, "tweets!")
 
 	case "test":
 		tweet, err := app.CreateTweet()

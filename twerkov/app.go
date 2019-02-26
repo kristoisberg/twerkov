@@ -1,7 +1,7 @@
 package twerkov
 
 import (
-	"log"
+	"errors"
 	"net/url"
 	"strings"
 
@@ -32,12 +32,11 @@ func (app *App) Init(config Config) (err error) {
 	}
 
 	app.API = anaconda.NewTwitterApiWithCredentials(config.TwitterAccessToken, config.TwitterAccessTokenSecret, config.TwitterConsumerKey, config.TwitterConsumerKeySecret)
-
 	return
 }
 
 // InitializeDatabase creates the database structure needed for the application to function
-func (app *App) InitializeDatabase() {
+func (app *App) InitializeDatabase() error {
 	stmt, err := app.Database.Handle.Query(`CREATE TABLE tweets (
 		id BIGINT(20) UNSIGNED NOT NULL,
 		user_id BIGINT(20) UNSIGNED NOT NULL,
@@ -46,24 +45,23 @@ func (app *App) InitializeDatabase() {
 	)`)
 
 	if err != nil {
-		log.Fatal(err.Error())
+		return err
 	}
 
-	defer stmt.Close()
-
-	log.Println("Database structure successfully created!")
+	stmt.Close()
+	return nil
 }
 
 // CacheUserTweets caches the latest tweets by the user with the specified username
-func (app *App) CacheUserTweets(username string) {
+func (app *App) CacheUserTweets(username string) (count int, err error) {
 	users, err := app.API.GetUsersLookup(username, nil)
 
 	if err != nil {
-		log.Fatal(err.Error())
+		return 0, err
 	}
 
 	if len(users) != 1 {
-		log.Fatal("Expected one user, found " + string(len(users)) + "!")
+		return 0, errors.New("Expected one user, found " + string(len(users)) + "!")
 	}
 
 	userID := users[0].Id
@@ -76,17 +74,14 @@ func (app *App) CacheUserTweets(username string) {
 	tweets, err := app.API.GetUserTimeline(userData)
 
 	if err != nil {
-		log.Fatal(err.Error())
+		return 0, err
 	}
 
 	for _, tweet := range tweets {
-		log.Println(tweet.FullText)
-
 		stmt, err := app.Database.Handle.Prepare("INSERT IGNORE INTO `tweets` (`id`, `user_id`, `text`) VALUES (?, ?, ?)")
 
 		if err != nil {
-			log.Println(err.Error())
-			continue
+			return count, err
 		}
 
 		defer stmt.Close()
@@ -94,10 +89,13 @@ func (app *App) CacheUserTweets(username string) {
 		_, err = stmt.Exec(tweet.Id, userID, tweet.FullText)
 
 		if err != nil {
-			log.Println(err.Error())
-			continue
+			return count, err
 		}
+
+		count++
 	}
+
+	return count, nil
 }
 
 // CreateTweet creates a tweet using Markov chains
@@ -117,7 +115,7 @@ func (app *App) CreateTweet() (string, error) {
 		stmt.Scan(&text)
 
 		if err != nil {
-			log.Fatal(err.Error())
+			return "", err
 		}
 
 		words := strings.Split(text, " ")
