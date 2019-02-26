@@ -100,14 +100,13 @@ func (app *App) CacheUserTweets(username string) {
 	}
 }
 
-// GenerateTweet generates a tweet using Markov chains and tweets it
-func (app *App) GenerateTweet() {
+// CreateTweet creates a tweet using Markov chains
+func (app *App) CreateTweet() (string, error) {
 	chain := gomarkov.NewChain(1)
-
 	stmt, err := app.Database.Handle.Query("SELECT `text` FROM `tweets`")
 
 	if err != nil {
-		log.Fatal(err.Error())
+		return "", err
 	}
 
 	defer stmt.Close()
@@ -136,15 +135,16 @@ func (app *App) GenerateTweet() {
 		next, err := chain.Generate(tokens[(len(tokens) - 1):])
 
 		if err != nil {
-			log.Fatal(err.Error())
+			return "", err
 		}
 
 		tokens = append(tokens, next)
 	}
 
-	tweet := strings.Join(tokens[1:len(tokens)-1], " ")
+	return strings.Join(tokens[1:len(tokens)-1], " "), nil
+}
 
+// PostTweet posts a tweet on Twitter
+func (app *App) PostTweet(tweet string) {
 	app.API.PostTweet(tweet, url.Values{})
-
-	log.Println("New tweet: ", tweet)
 }

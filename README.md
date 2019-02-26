@@ -25,4 +25,6 @@ The values of all of the configuration variables are expected to be strings. Twi
 
 `twerkov cache <Twitter username>` - Caches the latest tweets from the user with the specified username. It is able to find the latest 200 tweets on the timeline of the user, but it excludes retweets, so the actual number of cached tweets is usually lower.
 
-`twerkov generate` - Generates a tweet using a Markov chain and tweets it.
+`twerkov test` - Generates a tweet using a Markov chain without tweeting it.
+
+`twerkov tweet` - Generates a tweet using a Markov chain and tweets it.

@@ -11,7 +11,7 @@ import (
 
 func main() {
 	if len(os.Args) < 2 {
-		log.Fatal("twerkov <init | cache | generate>")
+		log.Fatal("twerkov <init | cache | test | tweet>")
 	}
 
 	config := twerkov.Config{}
@@ -42,10 +42,26 @@ func main() {
 
 		app.CacheUserTweets(os.Args[2])
 
-	case "generate":
-		app.GenerateTweet()
+	case "test":
+		tweet, err := app.CreateTweet()
+
+		if err != nil {
+			log.Fatal(err.Error())
+		}
+
+		log.Println(tweet)
+
+	case "tweet":
+		tweet, err := app.CreateTweet()
+
+		if err != nil {
+			log.Fatal(err.Error())
+		}
+
+		app.PostTweet(tweet)
+		log.Println("New tweet:", tweet)
 
 	default:
-		log.Fatal("twerkov <init | cache | generate>")
+		log.Fatal("twerkov <init | cache | test | tweet>")
 	}
 }
