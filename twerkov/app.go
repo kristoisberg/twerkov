@@ -16,27 +16,31 @@ type App struct {
 	Database *Database
 }
 
-// Init initializes the application and connects to the database and Twitter API
+// Init initialises the application and connects to the database and Twitter API
 func (app *App) Init(config Config) (err error) {
 	app.Config = config
+
 	app.Database, err = CreateDatabaseConnection(config)
-
 	if err != nil {
 		return
 	}
 
-	err = app.Database.Handle.Ping()
-
-	if err != nil {
+	if err = app.Database.Handle.Ping(); err != nil {
 		return
 	}
 
-	app.API = anaconda.NewTwitterApiWithCredentials(config.TwitterAccessToken, config.TwitterAccessTokenSecret, config.TwitterConsumerKey, config.TwitterConsumerKeySecret)
+	app.API = anaconda.NewTwitterApiWithCredentials(
+		config.TwitterAccessToken,
+		config.TwitterAccessTokenSecret,
+		config.TwitterConsumerKey,
+		config.TwitterConsumerKeySecret,
+	)
+
 	return
 }
 
-// InitializeDatabase creates the database structure needed for the application to function
-func (app *App) InitializeDatabase() error {
+// InitialiseDatabase creates the database structure needed for the application to function
+func (app *App) InitialiseDatabase() error {
 	stmt, err := app.Database.Handle.Query(`CREATE TABLE tweets (
 		id BIGINT(20) UNSIGNED NOT NULL,
 		user_id BIGINT(20) UNSIGNED NOT NULL,
@@ -55,7 +59,6 @@ func (app *App) InitializeDatabase() error {
 // CacheUserTweets caches the latest tweets by the user with the specified username
 func (app *App) CacheUserTweets(username string) (count int, err error) {
 	users, err := app.API.GetUsersLookup(username, nil)
-
 	if err != nil {
 		return 0, err
 	}
@@ -72,23 +75,19 @@ func (app *App) CacheUserTweets(username string) (count int, err error) {
 	userData.Set("count", "200")
 
 	tweets, err := app.API.GetUserTimeline(userData)
-
 	if err != nil {
 		return 0, err
 	}
 
 	for _, tweet := range tweets {
 		stmt, err := app.Database.Handle.Prepare("INSERT IGNORE INTO `tweets` (`id`, `user_id`, `text`) VALUES (?, ?, ?)")
-
 		if err != nil {
 			return count, err
 		}
 
 		defer stmt.Close()
 
-		_, err = stmt.Exec(tweet.Id, userID, tweet.FullText)
-
-		if err != nil {
+		if _, err = stmt.Exec(tweet.Id, userID, tweet.FullText); err != nil {
 			return count, err
 		}
 
@@ -101,8 +100,8 @@ func (app *App) CacheUserTweets(username string) (count int, err error) {
 // CreateTweet creates a tweet using Markov chains
 func (app *App) CreateTweet() (string, error) {
 	chain := gomarkov.NewChain(1)
-	stmt, err := app.Database.Handle.Query("SELECT `text` FROM `tweets`")
 
+	stmt, err := app.Database.Handle.Query("SELECT `text` FROM `tweets`")
 	if err != nil {
 		return "", err
 	}
@@ -112,9 +111,7 @@ func (app *App) CreateTweet() (string, error) {
 	for stmt.Next() {
 		var text string
 
-		stmt.Scan(&text)
-
-		if err != nil {
+		if err := stmt.Scan(&text); err != nil {
 			return "", err
 		}
 
@@ -131,7 +128,6 @@ func (app *App) CreateTweet() (string, error) {
 
 	for tokens[len(tokens)-1] != gomarkov.EndToken {
 		next, err := chain.Generate(tokens[(len(tokens) - 1):])
-
 		if err != nil {
 			return "", err
 		}
@@ -143,6 +139,7 @@ func (app *App) CreateTweet() (string, error) {
 }
 
 // PostTweet posts a tweet on Twitter
-func (app *App) PostTweet(tweet string) {
-	app.API.PostTweet(tweet, url.Values{})
+func (app *App) PostTweet(tweet string) (err error) {
+	_, err = app.API.PostTweet(tweet, url.Values{})
+	return
 }

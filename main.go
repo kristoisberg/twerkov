@@ -15,17 +15,14 @@ func main() {
 	}
 
 	config := twerkov.Config{}
-	err := envconfig.Process("TWERKOV", &config)
 
-	if err != nil {
+	if err := envconfig.Process("TWERKOV", &config); err != nil {
 		log.Fatal(err.Error())
 	}
 
 	app := twerkov.App{}
 
-	err = app.Init(config)
-
-	if err != nil {
+	if err := app.Init(config); err != nil {
 		log.Fatal(err.Error())
 	}
 
@@ -33,9 +30,7 @@ func main() {
 
 	switch os.Args[1] {
 	case "init":
-		err := app.InitializeDatabase()
-
-		if err != nil {
+		if err := app.InitialiseDatabase(); err != nil {
 			log.Fatal(err.Error())
 		}
 
@@ -47,7 +42,6 @@ func main() {
 		}
 
 		count, err := app.CacheUserTweets(os.Args[2])
-
 		if err != nil {
 			log.Fatal(err.Error())
 		}
@@ -56,7 +50,6 @@ func main() {
 
 	case "test":
 		tweet, err := app.CreateTweet()
-
 		if err != nil {
 			log.Fatal(err.Error())
 		}
@@ -65,12 +58,14 @@ func main() {
 
 	case "tweet":
 		tweet, err := app.CreateTweet()
-
 		if err != nil {
 			log.Fatal(err.Error())
 		}
 
-		app.PostTweet(tweet)
+		if err := app.PostTweet(tweet); err != nil {
+			log.Fatal(err.Error())
+		}
+
 		log.Println("New tweet:", tweet)
 
 	default:
