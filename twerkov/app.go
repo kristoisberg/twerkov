@@ -108,6 +108,7 @@ func (app *App) CreateTweet() (string, error) {
 
 	defer stmt.Close()
 
+OUTER:
 	for stmt.Next() {
 		var text string
 
@@ -118,7 +119,13 @@ func (app *App) CreateTweet() (string, error) {
 		words := strings.Split(text, " ")
 
 		if len(words) < 3 {
-			continue
+			continue OUTER
+		}
+
+		for _, word := range words {
+			if len(word) > 0 && []rune(word)[0] == '@' {
+				continue OUTER
+			}
 		}
 
 		chain.Add(words)
